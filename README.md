@@ -13,8 +13,6 @@
 
 *Predictive maintenance meets real-time optimization for industrial robotic systems*
 
-[📖 Documentation](#documentation) • [🎯 Features](#features) • [🚀 Quick Start](#quick-start) • [📅 Roadmap](#project-roadmap) • [👥 Team](#team)
-
 </div>
 
 ---
