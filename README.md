@@ -177,8 +177,8 @@ CoreX is developed by three specialized teams working in parallel:
 
 *Transforming Industrial Automation, One Prediction at a Time*
 
-**CoreX © 2025** | Industry 4.0 | Digital Twin | Predictive Maintenance
+| Industry 4.0 | Digital Twin | Predictive Maintenance
+**CoreX © 2025**
 
-ork)
 
 </div>
