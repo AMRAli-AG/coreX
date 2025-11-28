@@ -27,7 +27,7 @@
 - **Secure** industrial networks with enterprise-grade encryption
 - **Monitor** robot health through intuitive dashboards
 
-Built specifically for **KUKA industrial robots**, CoreX creates a virtual replica of your physical robot that synchronizes in real-time, allowing AI models to detect anomalies, predict component failures, and recommend preventive actions—all before disruptions occur.
+Built specifically for **arm robots**, CoreX creates a virtual replica of your physical robot that synchronizes in real-time, allowing AI models to detect anomalies, predict component failures, and recommend preventive actions—all before disruptions occur.
 
 ---
 
