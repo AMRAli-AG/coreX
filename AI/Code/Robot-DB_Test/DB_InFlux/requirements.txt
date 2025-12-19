@@ -1,0 +1,13 @@
+pandas
+influxdb-client
+# requests
+
+
+
+# conda create -n robot_db_env python=3.10 -y
+# conda activate robot_db_env
+# pip install -r requirements.txt
+
+
+## to run influxdb locally using docker  >>  docker run -p 8086:8086 -v influxdb:/var/lib/influxdb2 influxdb:2.7
+## then access influxdb UI at http://localhost:8086
