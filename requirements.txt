@@ -9,3 +9,4 @@ jupyter>=1.0.0
 websockets
 flask
 flask-cors
+ur-rtde
