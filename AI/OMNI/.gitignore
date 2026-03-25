@@ -1,0 +1,30 @@
+# Python ignores
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Data and large files
+*.csv
+*.xlsx
+*.pkl
+
+# Checkpoints and models
+Version_1_Baseline/model_coreX_v1/
+Version_2_Hybrid/model_coreX_v2_optimized/
+**/results/
+
+# Data folders
+**/data/
+
+# Archives and Logs
+archives/
+debug_logs/
+*.zip
+
+# OS generated files
+.DS_Store
+Thumbs.db
