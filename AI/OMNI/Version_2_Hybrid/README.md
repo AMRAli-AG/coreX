@@ -1,42 +1,27 @@
-# Version 2: Hybrid Causal Graph OmniAnomaly
+# OmniAnomaly Version 2: Hybrid Optimized
 
-This folder contains the **V2 Optimized** implementation, which integrates a spatial **Causal Graph Module** directly into the OmniAnomaly architecture. It is completely isolated from V1 and contains its own processed data, causal adjacency matrix, and trained checkpoints.
+This folder contains the **final, optimized hybrid architecture** of OmniAnomaly. It features gated recurrent units (GRU), a **Causal Graph Module**, and advanced feature engineering for superior anomaly detection.
 
-## Setup
-
-Ensure you have installed the requirements:
+## 🚀 Quick Run (Evaluation)
+To run the model using the pre-trained optimized checkpoint:
 ```bash
-pip install -r requirements.txt
+python main.py --restore_dir model_coreX_v2_optimized --max_epoch 0
 ```
 
-*(Note: TensorFlow 1.x / 2.x compatibility is handled automatically by the codebase.)*
+## 🛠️ Full Training
+To retrain the model from scratch:
+```bash
+python main.py
+```
 
-## Architecture Upgrades over V1
+## 🏗️ Key Upgrades vs V1
+- **Relational Awareness**: Uses `causal_adj_matrix.npy` to model sensor dependencies.
+- **Improved Stability**: Patched probability wrappers for newer TFP/TF environments.
+- **Enhanced Accuracy**: Association Discrepancy logic for better sensitivity.
 
-- **Causal Graph Integration**: Uses `causal_adj_matrix.npy` to spatially weight variables during reconstruction.
-- **Improved Data Windowing**: Different sliding window size and feature set compared to V1.
-- **Handling of TF Scopes**: Fixes applied for variable reuse (`tf.AUTO_REUSE`) to allow seamless training and scoring in a single execution.
+## 📂 Structure
+- `main.py`: Entry point for the optimized pipeline.
+- `data/processed/`: Version 2 datasets.
+- `model_coreX_v2_optimized/`: Final production-ready weights.
 
-## Running the Code
-
-1. **Preprocess Data (if needed)**
-   The `data/processed/` folder already contains the required `.pkl` files (which are different from V1).
-   If you need to re-run preprocessing:
-   ```bash
-   python data_preprocess.py
-   ```
-
-2. **Train the Model & Evaluate**
-   To run the complete pipeline (training + scoring):
-   ```bash
-   python main.py
-   ```
-
-## Key Files
-
-- `main.py`: The entry point for training and evaluation.
-- `causal_adj_matrix.npy`: The Causal Graph structural matrix.
-- `model_coreX_v2_optimized/`: Contains the pre-trained checkpoints for V2.
-- `data/`: Contains the raw data and `processed/` .pkl files specific to V2.
-- `omni_anomaly/`: The customized model architecture with Graph operations.
-- `results/`: Output folder for final evaluation metrics.
+*For full installation instructions, refer to the [Master Guide](../README_GLOBAL.md).*

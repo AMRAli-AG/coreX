@@ -1,35 +1,23 @@
-# Version 1: Baseline OmniAnomaly
+# OmniAnomaly Version 1: Baseline
 
-This folder contains the **V1 Baseline** implementation of the OmniAnomaly model. It is completely isolated from V2 and contains its own processed data and trained checkpoints.
+This folder contains the **original baseline implementation** of OmniAnomaly. Use this version to establish a performance benchmark before testing the Hybrid architecture.
 
-## Setup
-
-Ensure you have installed the requirements:
+## 🚀 Quick Run (Evaluation)
+To run the model using the pre-trained checkpoint and see results immediately:
 ```bash
-pip install -r requirements.txt
+python main.py --restore_dir model_coreX_v1 --max_epoch 0
 ```
 
-*(Note: TensorFlow 1.x / 2.x compatibility is handled automatically by the codebase.)*
+## 🛠️ Full Training
+To retrain the model from scratch:
+```bash
+python main.py
+```
 
-## Running the Code
+## 📂 Structure
+- `main.py`: Entry point for training and evaluation.
+- `data/processed/`: Contains the specific windowed dataset for V1.
+- `model_coreX_v1/`: Pre-trained model weights.
+- `omni_anomaly/`: Core model logic and wrappers.
 
-1. **Preprocess Data (if needed)**
-   The `data/processed/` folder already contains the required `.pkl` files.
-   If you need to re-run preprocessing from the raw `.csv`/`.xlsx` files:
-   ```bash
-   python data_preprocess.py
-   ```
-
-2. **Train the Model & Evaluate**
-   To run the complete pipeline (training + scoring):
-   ```bash
-   python main.py
-   ```
-
-## Key Files
-
-- `main.py`: The entry point for training and evaluation.
-- `model_coreX_v1/`: Contains the pre-trained checkpoints.
-- `data/`: Contains the `RobotArm` raw data and `processed/` .pkl files.
-- `omni_anomaly/`: The core model architecture.
-- `results/`: Output folder for final evaluation metrics and plots.
+*For full installation instructions, refer to the [Master Guide](../README_GLOBAL.md).*
