@@ -6,15 +6,18 @@ __pycache__/
 # IDE / Editor
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# Data and large files
-*.csv
+# Data and large files (CSV enabled for OMNI upload)
+# *.csv
 *.xlsx
-*.pkl
+# *.pkl
 
 # Checkpoints and models
-Version_1_Baseline/model_coreX_v1/
-Version_2_Hybrid/model_coreX_v2_optimized/
+AI/OMNI/Version_1_Baseline/model_coreX_v1/
+AI/OMNI/Version_2_Hybrid/model_coreX_v2_optimized/
 **/results/
 
 # Data folders
@@ -28,3 +31,9 @@ debug_logs/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Conda environment
+env/
+venv/
+ENV/
+.env
