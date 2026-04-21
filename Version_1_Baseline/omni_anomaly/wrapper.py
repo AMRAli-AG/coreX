@@ -10,10 +10,18 @@ class TfpDistribution(Distribution):
         if not isinstance(distribution, tfp.distributions.Distribution):
             raise TypeError('`distribution` is not an instance of `tfp.'
                             'distributions.Distribution`')
-        super(TfpDistribution, self).__init__()
         self._distribution = distribution
         self._is_continuous = True
         self._is_reparameterized = self._distribution.reparameterization_type is tfp.distributions.FULLY_REPARAMETERIZED
+        super(TfpDistribution, self).__init__(
+            dtype=distribution.dtype,
+            is_continuous=self._is_continuous,
+            is_reparameterized=self._is_reparameterized,
+            batch_shape=distribution.batch_shape,
+            batch_static_shape=distribution.batch_shape,
+            value_ndims=tf.size(distribution.event_shape) if distribution.event_shape else 0
+        )
+
 
     def sample(self, n_samples=None, is_reparameterized=None, group_ndims=0, compute_density=False, name=None):
         from tfsnippet.stochastic import StochasticTensor

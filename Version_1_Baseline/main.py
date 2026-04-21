@@ -19,7 +19,8 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tfsnippet.examples.utils import MLResults, print_with_title
-from tfsnippet.scaffold import VariableSaver
+# from tfsnippet.scaffold import VariableSaver # Removed in newer tfsnippet
+
 from tfsnippet.utils import get_variables_as_dict, register_config_arguments, Config
 
 from omni_anomaly.eval_methods import pot_eval, bf_search
@@ -210,7 +211,8 @@ def main():
         if not is_restored and config.save_dir:
             if not os.path.exists(config.save_dir): os.makedirs(config.save_dir)
             var_dict = get_variables_as_dict(model_vs)
-            VariableSaver(var_dict, config.save_dir).save()
+            saver = tf.train.Saver(var_list=var_dict)
+            saver.save(sess, os.path.join(config.save_dir, 'variables.dat'))
             print(f"--- [coreX Info]: Model saved to {config.save_dir}")
 
         # 8. التقرير النهائي

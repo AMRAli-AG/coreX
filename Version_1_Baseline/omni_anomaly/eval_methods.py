@@ -4,6 +4,7 @@ import numpy as np
 from omni_anomaly.spot import SPOT
 
 
+
 def calc_point2point(predict, actual):
     """
     حساب الـ F1-Score وباقي الـ Metrics بدقة متناهية.
@@ -75,7 +76,7 @@ def adjust_predicts(score, label, threshold=None, pred=None, calc_latency=False)
             first_detection = np.where(predict[start:end] == 1)[0][0]
             latency += first_detection
             
-            # ✅ تلوين الفترة كلها بـ True (اكتشاف العطل بالكامل)
+            # تلوين الفترة كلها بـ True (اكتشاف العطل بالكامل)
             predict[start:end] = 1
             
     # 5. إرجاع النتائج
@@ -144,7 +145,7 @@ def bf_search(score, label, start, end=None, step_num=100, display_freq=10, verb
     best_latency = 0.0
     
     if verbose:
-        print(f"🚀 [Search] Starting Brute Force from {start:.4f} to {end:.4f} ({step_num} steps)")
+        print(f"--- [Search] Starting Brute Force from {start:.4f} to {end:.4f} ({step_num} steps) ---")
 
     # 2. الـ Search Loop
     for i, thr in enumerate(thresholds):
@@ -161,11 +162,11 @@ def bf_search(score, label, start, end=None, step_num=100, display_freq=10, verb
             best_latency = res[-1] if len(res) > 8 else 0.0 # الـ latency آخر عنصر
             
         if verbose and i % display_freq == 0:
-            print(f"🔹 Step {i}/{step_num} | Thr: {thr:.4f} | F1: {current_f1:.4f} | Best F1: {best_metrics[0]:.4f}")
+            print(f"--- Step {i}/{step_num} | Thr: {thr:.4f} | F1: {current_f1:.4f} | Best F1: {best_metrics[0]:.4f} ---")
 
     if verbose:
         print("\n" + "="*40)
-        print("🏆 FINAL BEST RESULTS 🏆")
+        print("--- FINAL BEST RESULTS ---")
         print(f"Best Threshold: {best_threshold:.6f}")
         print(f"F1-Score:      {best_metrics[0]:.4f}")
         print(f"Precision:     {best_metrics[1]:.4f}")
@@ -206,9 +207,9 @@ def pot_eval(init_score, score, label, q=1e-3, level=0.02, dynamic=False):
     metrics = calc_point2point(pred, label) # بترجع [f1, pre, rec, acc, tp, tn, fp, fn]
 
     if True: # Printing for logs
-        print(f"\n📊 [POT Results] Found {len(ret['alarms'])} Alarms")
-        print(f"📍 Suggested Threshold: {pot_th:.4f}")
-        print(f"⏱️ Response Latency: {p_latency:.2f}")
+        print(f"\n[POT Results] Found {len(ret['alarms'])} Alarms")
+        print(f"--- Suggested Threshold: {pot_th:.4f} ---")
+        print(f"--- Response Latency: {p_latency:.2f} ---")
 
     # 5. الترجيع في شكل قاموس منظم جداً
     return {
