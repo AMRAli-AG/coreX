@@ -1,0 +1,47 @@
+# ============================================================================
+# CoreX V2 - RTX 3060 Compatible Environment (TF 2.10 + CUDA 11.2)
+# ============================================================================
+# USAGE:
+#   conda create -n corex_rtx python=3.9
+#   conda activate corex_rtx
+#   pip install -r requirements_rtx3060.txt
+#
+# WHY TF 2.10?
+#   - RTX 3060 (Ampere SM 8.6) needs CUDA 11.x (TF 1.15 only supports CUDA 10.0)
+#   - TF 2.10 has excellent compat.v1 support (the V2 code already uses it)
+#   - TF 2.10 ships with CUDA 11.2 support built-in
+# ============================================================================
+
+# ── Core Deep Learning ──────────────────────────────────────────────────────
+tensorflow==2.10.0
+tensorflow-probability==0.18.0
+
+# ── Data & Science ──────────────────────────────────────────────────────────
+numpy==1.23.5
+pandas==1.5.3
+scipy==1.9.3
+scikit-learn==1.1.3
+matplotlib==3.6.3
+seaborn==0.12.2
+
+# ── Utilities ───────────────────────────────────────────────────────────────
+tqdm==4.64.1
+six==1.16.0
+PyYAML==5.4.1
+imageio==2.25.0
+click==8.1.3
+openpyxl==3.1.3
+xlrd==2.0.1
+filelock>=3.4.1
+frozendict>=2.0.6
+idx2numpy>=1.2.3
+lazy-object-proxy>=1.4.3
+natsort>=7.1.1
+semver>=2.7.9
+fs>=2.4.16
+
+# ── OmniAnomaly Dependencies (install AFTER tensorflow) ────────────────────
+# These are TF1-era packages. Install with --no-deps to avoid version conflicts:
+#   pip install --no-deps git+https://github.com/haowen-xu/tfsnippet.git@7b43abdbdd29f1914dbc11b961b5d45b9de76653
+#   pip install --no-deps zhusuan==0.4.0
+# The V2 code already has shim layers (MockContrib etc.) to handle compatibility.

@@ -7,16 +7,21 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
 # --- TF 1.x Compatibility Shim (Critical for tfsnippet on TF 2.x) ---
-class MockContrib(object):
-    def __init__(self):
-        self.rnn = self
-        self.framework = MockFramework()
-        self.layers = MockLayers()
-    def static_bidirectional_rnn(self, *args, **kwargs):
-        return [tf.zeros_like(args[2][0])] * len(args[2]), None, None
+
+# 1. Real layer_norm implementation using pure TF1 ops (no Keras layers)
+#    Uses tf.get_variable so TF1 variable scoping and reuse works correctly.
+def _layer_norm(inputs, scope=None, *args, **kwargs):
+    """Pure TF1 layer normalization (replaces tf.contrib.layers.layer_norm)."""
+    with tf.variable_scope(scope or 'LayerNorm', reuse=tf.AUTO_REUSE):
+        n_dims = inputs.get_shape()[-1].value or tf.shape(inputs)[-1]
+        gamma = tf.get_variable('gamma', shape=[n_dims], initializer=tf.ones_initializer())
+        beta = tf.get_variable('beta', shape=[n_dims], initializer=tf.zeros_initializer())
+        mean, variance = tf.nn.moments(inputs, axes=[-1], keep_dims=True)
+        return gamma * (inputs - mean) / tf.sqrt(variance + 1e-6) + beta
 
 class MockLayers(object):
-    def layer_norm(self, inputs, *args, **kwargs): return inputs
+    """Provides tf.contrib.layers compatibility."""
+    layer_norm = staticmethod(_layer_norm)
 
 class MockFramework(object):
     def add_arg_scope(self, func): return func
@@ -26,24 +31,44 @@ class MockFramework(object):
             def __exit__(self, exc_type, exc_val, exc_tb): pass
         return DummyContextManager()
 
+class MockContrib(object):
+    def __init__(self):
+        self.rnn = self
+        self.framework = MockFramework()
+        self.layers = MockLayers()
+    def static_bidirectional_rnn(self, *args, **kwargs):
+        return [tf.zeros_like(args[2][0])] * len(args[2]), None, None
+
 mock_contrib = MockContrib()
+
+# 2. Inject contrib into tf.compat.v1 (used by project code via `import tensorflow.compat.v1 as tf`)
 tf.contrib = mock_contrib
+
+# 3. Register contrib in sys.modules so `from tensorflow.contrib import X` works
 sys.modules['tensorflow.contrib'] = mock_contrib
 sys.modules['tensorflow.contrib.framework'] = mock_contrib.framework
 sys.modules['tensorflow.contrib.layers'] = mock_contrib.layers
 sys.modules['tensorflow.contrib.rnn'] = mock_contrib
 
+# 4. Patch math aliases on tf.compat.v1
 if not hasattr(tf, 'log'): tf.log = tf.math.log
 if not hasattr(tf, 'exp'): tf.exp = tf.math.exp
 if not hasattr(tf, 'sqrt'): tf.sqrt = tf.math.sqrt
 
-# Apply to the base 'tensorflow' module as well
+# 5. Copy ALL tf.compat.v1 attributes onto the base 'tensorflow' module
+#    so that `import tensorflow` in third-party libs (tfsnippet, zhusuan) gets TF1 APIs.
+#    CRITICAL: Skip 'compat' to avoid corrupting the tensorflow.compat module hierarchy.
 import tensorflow as tf_base
-for attr in ['log', 'exp', 'sqrt', 'layers', 'GraphKeys']:
-    if not hasattr(tf_base, attr):
-        setattr(tf_base, attr, getattr(tf.compat.v1, attr) if hasattr(tf.compat.v1, attr) else getattr(tf.math, attr))
-sys.modules['tensorflow'].log = tf.math.log
-# -------------------------------------------------------------------
+for attr in dir(tf):
+    if attr.startswith('__') or attr == 'compat':
+        continue
+    try:
+        setattr(tf_base, attr, getattr(tf, attr))
+    except (AttributeError, TypeError):
+        pass
+
+# 6. Also set contrib on the base tensorflow module
+tf_base.contrib = mock_contrib
 
 # -*- coding: utf-8 -*-
 import logging
@@ -113,7 +138,7 @@ class ExpConfig(Config):
     level            = 0.01   # POT risk level
 
     # ── Training ──────────────────────────────────────────────────────────────
-    max_epoch   = 200      # [UPGRADED] 100→200: allow for better convergence
+    max_epoch   = 1        # [TEST RUN] Set to 1 for RTX 3060 validation. Change to 100-150 for full training.
     batch_size  = 64       # [ADJUSTED] 50→64: more stable gradients
     initial_lr  = 0.001
     early_stop  = True

@@ -135,14 +135,7 @@ class RecurrentDistribution(Distribution):
         self.batch_size = tf.shape(input_q)[0]
         
         # 2. نداء الـ Base Class بالباراميترز الـ 6 المطلوبة (لأجل توافق tfsnippet)
-        super(RecurrentDistribution, self).__init__(
-            dtype=self._dtype,
-            is_continuous=self._is_continuous,
-            is_reparameterized=self._is_reparameterized,
-            batch_shape=tf.stack([self.batch_size, window_length]),
-            batch_static_shape=tf.TensorShape([None, window_length]),
-            value_ndims=1
-        )
+        super(RecurrentDistribution, self).__init__()
 
         
         # 1. تعريف الـ Prior الأساسي (Standard Normal)
