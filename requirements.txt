@@ -10,3 +10,4 @@ websockets
 flask
 flask-cors
 ur-rtde
+paho-mqtt
