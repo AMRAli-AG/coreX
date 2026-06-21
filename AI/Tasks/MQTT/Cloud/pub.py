@@ -8,8 +8,8 @@ import paho.mqtt.client as mqtt
 HOST = "37e15fa95a3441108c3ac7989d2a08a4.s1.eu.hivemq.cloud"
 PORT = 8883
 
-USERNAME = "jetson"
-PASSWORD = "0000aA0000"
+USERNAME = ""
+PASSWORD = ""
 
 TOPIC = "robot/telemetry"
 
