@@ -242,8 +242,8 @@ class SPOT:
 
             if verbose:
                 print('[done]')
-                print(f'\tγ (gamma) = {g:.6f}')
-                print(f'\tσ (sigma) = {s:.6f}')
+                print(f'\tGamma = {g:.6f}')
+                print(f'\tSigma = {s:.6f}')
                 print(f'\tL (Likelihood) = {l:.6f}')
                 print(f'Extreme quantile (prob = {self.proba}): {self.extreme_quantile}')
 
@@ -789,8 +789,8 @@ class biSPOT:
                 print('\t' + 'Parameters'.rjust(ltab) + 'Upper'.rjust(ltab) + 'Lower'.rjust(ltab))
                 print('\t' + '-' * ltab * 3)
                 # استخدام اليونيكود لرسم الرموز الرياضية (Gamma و Sigma)
-                print(form % (chr(0x03B3), self.gamma['up'], self.gamma['down']))
-                print(form % (chr(0x03C3), self.sigma['up'], self.sigma['down']))
+                print(form % ('Gamma', self.gamma['up'], self.gamma['down']))
+                print(form % ('Sigma', self.sigma['up'], self.sigma['down']))
                 print(form % ('Likelihood', l['up'] if l['up'] else 0, l['down'] if l['down'] else 0))
                 print(form % ('Extreme Quantile', self.extreme_quantile['up'], self.extreme_quantile['down']))
                 print('\t' + '-' * ltab * 3)

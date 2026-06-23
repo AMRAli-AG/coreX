@@ -14,8 +14,14 @@ class TfpDistribution(Distribution):
         self._distribution = distribution
         self._is_continuous = True
         self._is_reparameterized = self._distribution.reparameterization_type is tfp.distributions.FULLY_REPARAMETERIZED
-        super(TfpDistribution, self).__init__()
-
+        super(TfpDistribution, self).__init__(
+            dtype=distribution.dtype,
+            is_continuous=self._is_continuous,
+            is_reparameterized=self._is_reparameterized,
+            batch_shape=distribution.batch_shape,
+            batch_static_shape=distribution.batch_shape,
+            value_ndims=tf.size(distribution.event_shape) if distribution.event_shape else 0
+        )
     @property
     def value_shape(self):
         return tf.convert_to_tensor(self._distribution.event_shape)

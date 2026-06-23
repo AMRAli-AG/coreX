@@ -117,7 +117,7 @@ def bf_search(score, label, start, end=None, step_num=500, display_freq=50, verb
     best_latency   = 0.0
 
     if verbose:
-        print(f"\n🔍 [BF-Search] Range: {start:.2f} → {end:.2f} | Steps: {step_num}")
+        print(f"\n[Search] [BF-Search] Range: {start:.2f} -> {end:.2f} | Steps: {step_num}")
         print(f"   Score range in data: [{score.min():.2f}, {score.max():.2f}]")
 
     for i, thr in enumerate(thresholds):
@@ -134,7 +134,7 @@ def bf_search(score, label, start, end=None, step_num=500, display_freq=50, verb
 
     if verbose:
         print("\n" + "=" * 50)
-        print("🏆 BF-SEARCH FINAL RESULTS")
+        print("[WIN] BF-SEARCH FINAL RESULTS")
         print(f"   Best Threshold : {best_threshold:.4f}")
         print(f"   F1-Score       : {best_metrics[0]:.4f}")
         print(f"   Precision      : {best_metrics[1]:.4f}")
@@ -170,7 +170,7 @@ def pot_eval(init_score, score, label, q=1e-3, level=0.02, dynamic=False):
     pred, p_latency = adjust_predicts(score, label, pot_th, calc_latency=True)
     metrics = calc_point2point(pred, label)
 
-    print(f"\n📊 [POT] Alarms: {len(ret['alarms'])} | Threshold: {pot_th:.4f} | Latency: {p_latency:.2f}")
+    print(f"\n[STATS] [POT] Alarms: {len(ret['alarms'])} | Threshold: {pot_th:.4f} | Latency: {p_latency:.2f}")
 
     return {
         'pot-f1':          metrics[0],

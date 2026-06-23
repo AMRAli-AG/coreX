@@ -219,10 +219,10 @@ def main():
                 saver = tf.train.Saver()
                 try:
                     saver.restore(sess, latest)
-                    print("[coreX] ✅ Model restored successfully.")
+                    print("[coreX] [OK] Model restored successfully.")
                     is_restored = True
                 except Exception as e:
-                    print(f"[coreX] ❌ Restore failed: {e}")
+                    print(f"[coreX] [ERR] Restore failed: {e}")
 
         # ── 4. Training (skipped if restored) ────────────────────────────────
         best_valid_metrics = {}
@@ -236,10 +236,10 @@ def main():
                 elapsed = (time.time() - t0) / max(1, config.max_epoch)
                 best_valid_metrics['train_time_per_epoch'] = elapsed
         else:
-            print("[coreX] ⏩ Skipping training — jumping to evaluation.")
+            print("[coreX] [>>] Skipping training - jumping to evaluation.")
 
         # ── 5. Score Both Splits ─────────────────────────────────────────────
-        print("\n[coreX] 📊 Computing anomaly scores...")
+        print("\n[coreX] [STATS] Computing anomaly scores...")
         t0 = time.time()
         train_score, train_z, _ = predictor.get_score(x_train)
         test_score,  test_z,  _ = predictor.get_score(x_test)
@@ -260,7 +260,7 @@ def main():
             y_bin = (y_bin > 0).astype(np.float32)
             y_aligned = y_bin[-len(test_score_1d):]
 
-            print(f"\n[coreX] Label audit — unique: {np.unique(y_aligned)}  "
+            print(f"\n[coreX] Label audit - unique: {np.unique(y_aligned)}  "
                   f"anomaly pts: {int(y_aligned.sum())} / {len(y_aligned)}")
 
             # [IMPROVEMENT] BF-Search over actual score range (not fixed -100→100)
@@ -313,9 +313,9 @@ def main():
             try:
                 saver = tf.train.Saver(var_list=tf.global_variables())
                 saver.save(sess, os.path.join(config.save_dir, 'model.ckpt'))
-                print(f"[coreX] ✅ Model checkpoint saved to {config.save_dir}")
+                print(f"[coreX] [OK] Model checkpoint saved to {config.save_dir}")
             except Exception as e:
-                print(f"[coreX] ❌ Save failed: {e}")
+                print(f"[coreX] [ERR] Save failed: {e}")
 
         # ── 8. Final Report ───────────────────────────────────────────────────
         print('\n' + '=' * 60)

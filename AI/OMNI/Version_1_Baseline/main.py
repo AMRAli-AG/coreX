@@ -139,7 +139,8 @@ def main():
 
             if latest_ckpt:
                 print(f"--- [coreX Info]: Found Checkpoint: {latest_ckpt} ---")
-                saver = tf.train.Saver()
+                var_dict = get_variables_as_dict(model_vs)
+                saver = tf.train.Saver(var_list=var_dict)
                 try:
                     saver.restore(sess, latest_ckpt)
                     print("--- [coreX Info]: Success! Model Restored. ---")

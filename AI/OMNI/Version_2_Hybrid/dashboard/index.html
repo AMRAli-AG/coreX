@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniAnomaly V2 (Hybrid) Pipeline Dashboard</title>
+    
+    <!-- Google Fonts: Inter & Outfit & Fira Code for Terminal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 25, 40, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary-grad: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --terminal-bg: #1e1e1e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            padding: 2rem;
+        }
+
+        header {
+            max-width: 1500px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+
+        h1 {
+            font-size: 2.2rem;
+            background: var(--primary-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .subtitle { font-size: 0.95rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+        .controls {
+            display: flex; align-items: center; gap: 1rem;
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            padding: 0.75rem 1.5rem; border-radius: 12px; backdrop-filter: blur(12px);
+        }
+
+        .controls label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
+        select {
+            background: #111827; color: var(--text-main); border: 1px solid var(--card-border);
+            padding: 0.5rem 1rem; border-radius: 8px; font-family: inherit; font-size: 0.9rem; cursor: pointer;
+        }
+        select:focus { border-color: #10b981; outline: none; }
+
+        /* Pipeline Navigator Map - 7 Stages */
+        .pipeline-map {
+            max-width: 1500px; margin: 0 auto 2rem auto;
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem;
+        }
+
+        .pipeline-step {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 1.25rem; backdrop-filter: blur(12px);
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+
+        .pipeline-step::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: transparent; transition: background 0.3s;
+        }
+
+        .pipeline-step.active {
+            border-color: rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .pipeline-step.active::before { background: var(--primary-grad); }
+        .step-num { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .step-name { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .step-status { font-size: 0.8rem; color: var(--text-muted); }
+        .active .step-status { color: #34d399; }
+
+        /* Main Workspace Layout */
+        .workspace {
+            max-width: 1500px; margin: 0 auto;
+            display: grid; grid-template-columns: 380px 1fr; gap: 2rem;
+        }
+
+        /* Sidebar Panels */
+        .side-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .info-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 1.5rem; backdrop-filter: blur(12px);
+        }
+        .info-card h3 { font-size: 1.1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.9rem; }
+        .stat-label { color: var(--text-muted); }
+        .stat-value { font-weight: 600; }
+
+        .tag { padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; }
+        .tag.normal { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag.anomaly { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        /* Terminal Window Widget */
+        .terminal-card {
+            background: var(--terminal-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+        .terminal-header {
+            background: #2d2d2d;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #111;
+        }
+        .term-btn { width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; }
+        .term-red { background: #ff5f56; }
+        .term-yel { background: #ffbd2e; }
+        .term-grn { background: #27c93f; }
+        .terminal-body {
+            padding: 1rem;
+            color: #d4d4d4;
+            height: 350px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        .t-cmd { color: #569cd6; }
+        .t-str { color: #ce9178; }
+        .t-ok { color: #4ec9b0; }
+        .t-err { color: #f44747; font-weight: bold; }
+        .t-warn { color: #dcdcaa; }
+
+        /* Stage Content Area */
+        .stage-view {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 20px; padding: 2rem; backdrop-filter: blur(12px);
+            display: none; animation: fadeIn 0.4s ease-out forwards;
+        }
+        .stage-view.visible { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .stage-header { margin-bottom: 2rem; }
+        .stage-title h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .stage-title p { color: var(--text-muted); font-size: 0.95rem; }
+
+        .chart-container { position: relative; width: 100%; height: 400px; margin-bottom: 1.5rem; }
+
+        /* Specific Visualizers */
+        .sensor-selector {
+            display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; max-height: 150px; overflow-y: auto;
+            padding: 0.5rem; border: 1px solid var(--card-border); border-radius: 8px; background: rgba(0, 0, 0, 0.2);
+        }
+        .sensor-pill {
+            padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); cursor: pointer; transition: all 0.2s;
+        }
+        .sensor-pill.active { background: #10b981; border-color: #34d399; color: #fff; }
+
+        .latent-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 0.4rem; margin-top: 1rem; }
+        .latent-cell {
+            aspect-ratio: 1; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-size: 0.65rem; font-weight: 600; color: #fff; position: relative; border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .latent-cell span { font-size: 0.5rem; color: rgba(255, 255, 255, 0.6); margin-bottom: 1px; }
+
+        .infobox {
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px; padding: 1rem 1.25rem; font-size: 0.9rem; line-height: 1.5; color: #6ee7b7; margin-top: 1.5rem;
+        }
+
+        .flow-container {
+            display: flex; align-items: center; justify-content: space-around; padding: 2rem;
+            background: rgba(0, 0, 0, 0.2); border-radius: 16px; border: 1px solid var(--card-border);
+        }
+        .flow-block { text-align: center; width: 180px; padding: 1.5rem 1rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; }
+        .flow-arrow { font-size: 2rem; color: #3b82f6; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.4; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.4; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>OmniAnomaly V2 (Hybrid)</h1>
+            <div class="subtitle">Interactive 6-Stage Pipeline & Intermediate States Inspector</div>
+        </div>
+        <div class="controls">
+            <label for="seq-select">Target Sequence:</label>
+            <select id="seq-select"></select>
+        </div>
+    </header>
+
+    <div class="pipeline-map">
+        <div class="pipeline-step active" onclick="switchStage(1)" id="step-1">
+            <div class="step-num">Stage 01</div><div class="step-name">Windowed Input</div><div class="step-status">Raw Sensors [120 x 75]</div>
+        </div>
+        <div class="pipeline-step" onclick="switchStage(2)" id="step-2">
+            <div class="step-num">Stage 02</div><div class="step-name">Causal Graph</div><div class="step-status">CGAD Matrix [75 x 75]</div>
+        </div>
+        <div class="pipeline-step" onclick="switchStage(3)" id="step-3">
+            <div class="step-num">Stage 03</div><div class="step-name">Association Tracker</div><div class="step-status">AD Divergence [120]</div>
+        </div>
+        <div class="pipeline-step" onclick="switchStage(4)" id="step-4">
+            <div class="step-num">Stage 04</div><div class="step-name">Hybrid Encoder</div><div class="step-status">GRU+AD Latents [64]</div>
+        </div>
+        <div class="pipeline-step" onclick="switchStage(5)" id="step-5">
+            <div class="step-num">Stage 05</div><div class="step-name">Normalizing Flows</div><div class="step-status">20 NF Layers [64]</div>
+        </div>
+        <div class="pipeline-step" onclick="switchStage(6)" id="step-6">
+            <div class="step-num">Stage 06</div><div class="step-name">Decoder p(x|z)</div><div class="step-status">Signal Reconstructions</div>
+        </div>
+        <div class="pipeline-step" onclick="switchStage(7)" id="step-7">
+            <div class="step-num">Stage 07</div><div class="step-name">Anomaly Scoring</div><div class="step-status">RCA on 75 Sensors</div>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="side-panel">
+            <div class="info-card">
+                <h3>Sequence Metadata</h3>
+                <div class="stat-row"><span class="stat-label">Sequence ID:</span><span class="stat-value" id="meta-id">-</span></div>
+                <div class="stat-row"><span class="stat-label">Ground Truth Type:</span><span class="stat-value" id="meta-label">-</span></div>
+                <div class="stat-row"><span class="stat-label">Model Anomaly Score:</span><span class="stat-value" id="meta-score" style="color: var(--accent-orange); font-size: 1.1rem;">-</span></div>
+                <div class="stat-row"><span class="stat-label">Dynamic Threshold:</span><span class="stat-value" id="meta-threshold">-</span></div>
+                <div class="stat-row" style="margin-top: 1rem; border-top: 1px solid var(--card-border); padding-top: 1rem;">
+                    <span class="stat-label">Verdict:</span><span id="meta-verdict">-</span>
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <h3>Architectural Notes</h3>
+                <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;" id="stage-notes">
+                    Click steps above to see details on each specific stage.
+                </div>
+            </div>
+
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <div class="term-btn term-red"></div><div class="term-btn term-yel"></div><div class="term-btn term-grn"></div>
+                    <span style="margin-left: 10px; color: #888;">corex_env - Python 3.6</span>
+                </div>
+                <div class="terminal-body" id="term-out">
+                    <span class="t-cmd">Loading Version 2 Hybrid Environment...</span><br>
+                </div>
+            </div>
+        </div>
+
+        <main>
+            <!-- STAGE 1: Input -->
+            <section class="stage-view visible" id="view-1">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 1: Windowed Input (Post-Feature Selection)</h2>
+                        <p>120 timesteps mapped across 75 optimized sensors</p>
+                    </div>
+                </div>
+                <div class="chart-container"><canvas id="chart-input"></canvas></div>
+                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select Sensors to Plot (Toggle):</div>
+                <div class="sensor-selector" id="sensor-selector-1"></div>
+            </section>
+
+            <!-- STAGE 2: Causal Graph Matrix -->
+            <section class="stage-view" id="view-2">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 2: Causal Graph Module (CGAD)</h2>
+                        <p>Transfer Entropy Adjacency Matrix (75x75) defining physical causality between sensors.</p>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 600px; display: flex; justify-content: center; overflow: hidden;">
+                    <canvas id="chart-causal"></canvas>
+                </div>
+                <div class="infobox" style="border-color: #f59e0b; color: #fcd34d; background: rgba(245, 158, 11, 0.1);">
+                    <strong>🕸️ Graph Convolutional Network (GCN):</strong> This matrix dictates how the CausalGraphModule mixes information. Row $i$ and Column $j$ indicates the causal strength from sensor $i$ to sensor $j$. The raw data is multiplied by this graph *before* entering the Encoder.
+                </div>
+            </section>
+
+            <!-- STAGE 3: Association Discrepancy -->
+            <section class="stage-view" id="view-3">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 3: Association Discrepancy Tracker</h2>
+                        <p>Monitoring the KL Discrepancy between Prior Association (P) and Sequence Association (S)</p>
+                    </div>
+                </div>
+                <div class="chart-container"><canvas id="chart-ad"></canvas></div>
+                <div class="infobox" style="border-color: #3b82f6; color: #93c5fd; background: rgba(59, 130, 246, 0.1);">
+                    <strong>💡 Min-Max Adversarial Discovery:</strong> The AD module computes self-attention across the 120 window length. We plot the symmetric KL divergence (discrepancy). In anomalous regions, the Sequence Association diverges strongly from the Prior Association, spiking the discrepancy.
+                </div>
+            </section>
+
+            <!-- STAGE 4: Encoder -->
+            <section class="stage-view" id="view-4">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 4: Hybrid Encoder q(z|x)</h2>
+                        <p>Concatenated GRU + AD features projected into a 64-dimensional latent distribution.</p>
+                    </div>
+                </div>
+                <h3 style="margin-bottom: 0.5rem; font-size: 1.05rem;">Mean Latent Vector (μ)</h3>
+                <div class="latent-grid" id="latent-mean-grid"></div>
+                <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.05rem;">Standard Deviation Vector (σ) - Uncertainty</h3>
+                <div class="latent-grid" id="latent-std-grid"></div>
+                <div class="infobox">
+                    <strong>🔍 64-Dimensional Bottleneck:</strong> The architecture compresses the 75 sensor sequences into 64 parameters. Standard deviation indicates the model's uncertainty at that specific latent coordinate.
+                </div>
+            </section>
+
+            <!-- STAGE 5: Normalizing Flows -->
+            <section class="stage-view" id="view-5">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 5: Normalizing Flows (20 Layers)</h2>
+                        <p>Transforming the simple latent samples $z_0$ into a highly complex posterior $z_K$</p>
+                    </div>
+                </div>
+                <div class="flow-container">
+                    <div class="flow-block">
+                        <h4 style="color: #60a5fa; margin-bottom: 0.5rem;">Sampled (z₀)</h4>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Mean + Noise</div>
+                    </div>
+                    <div class="flow-arrow">➔</div>
+                    <div class="flow-block" style="border-color: #10b981; background: rgba(16, 185, 129, 0.05);">
+                        <h4 style="color: #34d399; margin-bottom: 0.5rem;">20 Planar Flows</h4>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">ACTIVE (v2_optimized)</div>
+                    </div>
+                    <div class="flow-arrow">➔</div>
+                    <div class="flow-block">
+                        <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">Transformed (z_K)</h4>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">To Decoder</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="margin-top: 2rem; height: 250px;"><canvas id="chart-flow-z"></canvas></div>
+            </section>
+
+            <!-- STAGE 6: Decoder -->
+            <section class="stage-view" id="view-6">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 6: Decoder p(x|z)</h2>
+                        <p>Reconstructing the 75 sensors across 120 timesteps from the transformed latent code.</p>
+                    </div>
+                </div>
+                <div class="chart-container"><canvas id="chart-recon"></canvas></div>
+                <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;">Select Sensor to Compare:</div>
+                <select id="recon-sensor-select" style="width: 200px; margin-bottom: 1rem;"></select>
+            </section>
+
+            <!-- STAGE 7: Scoring & RCA -->
+            <section class="stage-view" id="view-7">
+                <div class="stage-header">
+                    <div class="stage-title">
+                        <h2>Stage 7: Scoring & Root Cause Analysis</h2>
+                        <p>Computing log-likelihood loss for 75 sensors, weighted by AD Discrepancy.</p>
+                    </div>
+                </div>
+                <div class="chart-container"><canvas id="chart-scoring"></canvas></div>
+                <div class="infobox" style="border-color: #ef4444; color: #fca5a5; background: rgba(239, 68, 68, 0.1);">
+                    <strong>🚨 75-Sensor RCA:</strong> The combined log-likelihood and discrepancy scores isolate which of the 75 sensors deviated from expectation, serving as the root cause of the anomaly alarm.
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let dbData = null;
+        let activeStage = 1;
+        let selectedSequence = null;
+        
+        let activeSensorsStage1 = [0, 1, 2, 3, 4]; // default 5 sensors
+        
+        let chartInput = null, chartCausal = null, chartAD = null, chartFlowZ = null, chartRecon = null, chartScoring = null;
+
+        const stageDescriptions = {
+            1: "The sliding window extracts 120 timestamps. In Version 2, we use 75 pre-filtered physical sensors.",
+            2: "The Causal Graph Module (CGAD) loads a pre-calculated Transfer Entropy matrix to encode physical sensor causality before entering the network.",
+            3: "The new Association Discrepancy (AD) layer compares Prior Association (temporal distance) against Sequence Association (self-attention).",
+            4: "The Hybrid Encoder concatenates GRU temporal features with AD features, outputting a 64-dim bottleneck.",
+            5: "Version 2 activates 20 layers of Planar Normalizing Flows. They bend and twist the probability space to match complex, non-gaussian data distributions.",
+            6: "The Decoder reconstructs the 120-step sequence. Mismatches (gaps between solid and dashed lines) equal poor reconstruction.",
+            7: "The final anomaly score combines the Decoder's reconstruction failure (log-likelihood) weighted by the AD's discrepancy focus."
+        };
+
+        function addLog(text, type='info') {
+            const term = document.getElementById('term-out');
+            if (!term) return;
+            const prefix = `<span class="t-warn">[${new Date().toLocaleTimeString().split(' ')[0]}]</span> `;
+            let content = '';
+            if(type === 'cmd') content = `<span class="t-cmd">> ${text}</span>`;
+            else if(type === 'err') content = `<span class="t-err">${text}</span>`;
+            else if(type === 'ok') content = `<span class="t-ok">${text}</span>`;
+            else content = `<span class="t-str">${text}</span>`;
+            
+            term.innerHTML += `<div>${prefix}${content}</div>`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        fetch('data.json').then(res => res.json()).then(data => {
+            dbData = data;
+            addLog("data.json loaded successfully.", 'ok');
+            addLog(`Found ${data.sequences.length} extracted sequences.`);
+            initDashboard();
+        }).catch(err => {
+            addLog("Failed to load data.json. Run python export_dashboard_data.py", 'err');
+            console.error(err);
+        });
+
+        function initDashboard() {
+            const select = document.getElementById('seq-select');
+            dbData.sequences.forEach(seq => {
+                const opt = document.createElement('option');
+                opt.value = seq.id;
+                opt.textContent = `${seq.id.split('_').pop()} - Score: ${seq.total_anomaly_score.toFixed(3)}`;
+                select.appendChild(opt);
+            });
+
+            const reconSelect = document.getElementById('recon-sensor-select');
+            for(let i=0; i<75; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Sensor ${i}`;
+                reconSelect.appendChild(opt);
+            }
+            reconSelect.addEventListener('change', () => renderStage6());
+
+            const selectorDiv = document.getElementById('sensor-selector-1');
+            for(let i=0; i<75; i++) {
+                const pill = document.createElement('div');
+                pill.className = 'sensor-pill' + (activeSensorsStage1.includes(i) ? ' active' : '');
+                pill.textContent = `Sensor ${i}`;
+                pill.addEventListener('click', () => {
+                    if (activeSensorsStage1.includes(i)) {
+                        activeSensorsStage1 = activeSensorsStage1.filter(s => s !== i);
+                        pill.classList.remove('active');
+                    } else {
+                        activeSensorsStage1.push(i);
+                        pill.classList.add('active');
+                    }
+                    renderStage1();
+                });
+                selectorDiv.appendChild(pill);
+            }
+
+            select.addEventListener('change', (e) => loadSequence(e.target.value));
+            loadSequence(dbData.sequences[0].id);
+        }
+
+        function loadSequence(id) {
+            selectedSequence = dbData.sequences.find(s => s.id === id);
+            addLog(`Loaded Sequence ID: ${id}`, 'cmd');
+            addLog(`Ground Truth: ${selectedSequence.label} | Score: ${selectedSequence.total_anomaly_score.toFixed(3)}`);
+            
+            document.getElementById('meta-id').textContent = selectedSequence.id.split('_')[1];
+            
+            const labelEl = document.getElementById('meta-label');
+            labelEl.textContent = selectedSequence.label;
+            labelEl.className = 'stat-value tag ' + (selectedSequence.label === 'Normal' ? 'normal' : 'anomaly');
+            
+            document.getElementById('meta-score').textContent = selectedSequence.total_anomaly_score.toFixed(4);
+            document.getElementById('meta-threshold').textContent = dbData.threshold.toFixed(4);
+            
+            const verdictEl = document.getElementById('meta-verdict');
+            if (selectedSequence.total_anomaly_score > dbData.threshold) {
+                verdictEl.textContent = "ANOMALY ALARM";
+                verdictEl.className = 'stat-value tag anomaly';
+                addLog("Verdict: ANOMALY ALARM Triggered", 'err');
+            } else {
+                verdictEl.textContent = "NORMAL SIGNAL";
+                verdictEl.className = 'stat-value tag normal';
+                addLog("Verdict: NORMAL SIGNAL", 'ok');
+            }
+
+            renderActiveStage();
+        }
+
+        function switchStage(stageNum) {
+            document.querySelectorAll('.pipeline-step').forEach(step => step.classList.remove('active'));
+            document.getElementById(`step-${stageNum}`).classList.add('active');
+            
+            document.querySelectorAll('.stage-view').forEach(view => view.classList.remove('visible'));
+            document.getElementById(`view-${stageNum}`).classList.add('visible');
+            
+            activeStage = stageNum;
+            document.getElementById('stage-notes').textContent = stageDescriptions[stageNum];
+            addLog(`Navigated to Stage ${stageNum}: ${document.getElementById(`step-${stageNum}`).querySelector('.step-name').textContent}`, 'cmd');
+            
+            renderActiveStage();
+        }
+
+        function renderActiveStage() {
+            if (!selectedSequence) return;
+            if (activeStage === 1) renderStage1();
+            else if (activeStage === 2) renderStage2();
+            else if (activeStage === 3) renderStage3();
+            else if (activeStage === 4) renderStage4();
+            else if (activeStage === 5) renderStage5();
+            else if (activeStage === 6) renderStage6();
+            else if (activeStage === 7) renderStage7();
+        }
+
+        function getColor(index, alpha = 1) {
+            const hues = [150, 220, 280, 40, 10, 320, 190, 80];
+            return `hsla(${hues[index % hues.length]}, 70%, 60%, ${alpha})`;
+        }
+
+        function renderStage1() {
+            const ctx = document.getElementById('chart-input').getContext('2d');
+            const datasets = activeSensorsStage1.map(sensorIdx => ({
+                label: `Sensor ${sensorIdx}`,
+                data: selectedSequence.input_x.map(row => row[sensorIdx]),
+                borderColor: getColor(sensorIdx),
+                borderWidth: 1.5, fill: false, tension: 0.1
+            }));
+
+            if (chartInput) chartInput.destroy();
+            chartInput = new Chart(ctx, {
+                type: 'line',
+                data: { labels: Array.from({length: 120}, (_, i) => i), datasets: datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } } },
+                    plugins: { legend: { labels: { color: '#f3f4f6' } } }
+                }
+            });
+        }
+
+        function renderStage2() {
+            const ctx = document.getElementById('chart-causal').getContext('2d');
+            if (chartCausal) chartCausal.destroy();
+
+            // Prepare heatmap data
+            const size = dbData.causal_matrix ? dbData.causal_matrix.length : 0;
+            if (size === 0) {
+                console.error("Causal matrix data missing.");
+                return;
+            }
+
+            const dataPoints = [];
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    dataPoints.push({
+                        x: j, // col
+                        y: size - 1 - i, // row (invert Y to match matrix visual)
+                        v: dbData.causal_matrix[i][j]
+                    });
+                }
+            }
+
+            // Using Bubble chart to simulate heatmap because native chartjs heatmap needs plugin
+            chartCausal = new Chart(ctx, {
+                type: 'bubble',
+                data: {
+                    datasets: [{
+                        label: 'Transfer Entropy Strength',
+                        data: dataPoints.map(d => ({ x: d.x, y: d.y, r: Math.max(1, d.v * 15) })),
+                        backgroundColor: dataPoints.map(d => `rgba(245, 158, 11, ${Math.min(1.0, d.v * 3 + 0.1)})`),
+                        borderColor: 'rgba(245, 158, 11, 0.8)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { min: -1, max: size, title: { display: true, text: 'Target Sensor', color: '#9ca3af' }, ticks: { color: '#9ca3af', font: {size: 8} }, grid: { display: false } },
+                        y: { min: -1, max: size, title: { display: true, text: 'Source Sensor', color: '#9ca3af' }, ticks: { color: '#9ca3af', font: {size: 8} }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderStage3() {
+            const ctx = document.getElementById('chart-ad').getContext('2d');
+            if (chartAD) chartAD.destroy();
+            
+            chartAD = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 120}, (_, i) => i),
+                    datasets: [{
+                        label: 'KL Discrepancy (Prior vs Sequence)',
+                        data: selectedSequence.discrepancy,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderWidth: 2, fill: true, tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } } },
+                    plugins: { legend: { labels: { color: '#f3f4f6' } } }
+                }
+            });
+        }
+
+        function renderStage4() {
+            const meanGrid = document.getElementById('latent-mean-grid');
+            const stdGrid = document.getElementById('latent-std-grid');
+            meanGrid.innerHTML = ''; stdGrid.innerHTML = '';
+            
+            selectedSequence.z_mean.forEach((val, idx) => {
+                const cell = document.createElement('div'); cell.className = 'latent-cell';
+                const normalized = Math.max(-2, Math.min(2, val)) / 4 + 0.5;
+                cell.style.background = `rgba(16, 185, 129, ${normalized})`;
+                cell.innerHTML = `<span>z${idx}</span>${val.toFixed(2)}`;
+                meanGrid.appendChild(cell);
+            });
+
+            selectedSequence.z_std.forEach((val, idx) => {
+                const cell = document.createElement('div'); cell.className = 'latent-cell';
+                const normalized = Math.min(1.5, val) / 1.5;
+                cell.style.background = `rgba(239, 68, 68, ${normalized})`;
+                cell.innerHTML = `<span>z${idx}</span>${val.toFixed(2)}`;
+                stdGrid.appendChild(cell);
+            });
+        }
+
+        function renderStage5() {
+            const ctx = document.getElementById('chart-flow-z').getContext('2d');
+            if (chartFlowZ) chartFlowZ.destroy();
+            
+            chartFlowZ = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 64}, (_, i) => `z${i}`),
+                    datasets: [
+                        { label: 'Sampled z₀', data: selectedSequence.z_mean, backgroundColor: 'rgba(59, 130, 246, 0.6)' },
+                        { label: 'Transformed z_K', data: selectedSequence.z_sample, backgroundColor: 'rgba(16, 185, 129, 0.8)' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { grid: { display: false }, ticks: { color: '#9ca3af', font: {size: 9} } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } } },
+                    plugins: { legend: { labels: { color: '#f3f4f6' } } }
+                }
+            });
+        }
+
+        function renderStage6() {
+            const sensorIdx = parseInt(document.getElementById('recon-sensor-select').value);
+            const ctx = document.getElementById('chart-recon').getContext('2d');
+            
+            const originalData = selectedSequence.input_x.map(row => row[sensorIdx]);
+            const reconData = selectedSequence.x_reconstructed.map(row => row[sensorIdx]);
+
+            if (chartRecon) chartRecon.destroy();
+            chartRecon = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 120}, (_, i) => i),
+                    datasets: [
+                        { label: `Original Sensor ${sensorIdx}`, data: originalData, borderColor: '#3b82f6', borderWidth: 2, fill: false, tension: 0.1 },
+                        { label: `Reconstructed Sensor ${sensorIdx}`, data: reconData, borderColor: '#f59e0b', borderWidth: 2, borderDash: [5, 5], fill: false, tension: 0.1 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } } },
+                    plugins: { legend: { labels: { color: '#f3f4f6' } } }
+                }
+            });
+        }
+
+        function renderStage7() {
+            const ctx = document.getElementById('chart-scoring').getContext('2d');
+            const scores = selectedSequence.sensor_anomaly_scores;
+            
+            const bgColors = scores.map(s => s > 2.0 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)');
+
+            if (chartScoring) chartScoring.destroy();
+            chartScoring = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 75}, (_, i) => `S${i}`),
+                    datasets: [{ label: 'Anomaly Contribution Score (Negative Log-Likelihood * AD Weight)', data: scores, backgroundColor: bgColors }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { x: { grid: { display: false }, ticks: { color: '#9ca3af', font: {size: 8} } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } } },
+                    plugins: { legend: { labels: { color: '#f3f4f6' } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

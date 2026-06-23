@@ -144,16 +144,20 @@ def load_data(dataset='RobotArm'):
         print("\n--- [Step 3] Running Data Inventory Audit...")
         df_clean, sensors = initial_data_inventory(df_unpacked)
 
-        # --- تشغيل الدالة الثالثة: Visualizer (الرسومات) ---
-        print("\n--- [Step 4] Launching Visualizations...")
-        # ملحوظة: لو مش عايزة الرسومات توقف الكود، بنستخدم حيلة plt.show(block=False) 
-        # بس الأفضل نشغلها عادي ونقفلها عشان Matplotlib في بايثون 3.6 ساعات بيهنج
-        # advanced_data_visualizer(df_clean)
-        
         print("\n--- [Success] Everything finished! ---")
 
+    elif os.path.exists(output_file):
+        print(f"🔍 [Info] Raw {file_path} not found, but pre-unpacked {output_file} is present!")
+        print("--- [Step 1] Loading pre-unpacked data directly...")
+        df_unpacked = pd.read_csv(output_file)
+        
+        # --- تشغيل الدالة الثانية: Inventory (الجرد) ---
+        print("\n--- [Step 3] Running Data Inventory Audit on pre-unpacked data...")
+        df_clean, sensors = initial_data_inventory(df_unpacked)
+        
+        print("\n--- [Success] Pre-unpacked data loaded and audited! ---")
     else:
-        print(f"[ERR] Error: Could not find {file_path}")
+        print(f"[ERR] Error: Could not find raw {file_path} or pre-unpacked {output_file}")
         return None, None, None, None
 
 
