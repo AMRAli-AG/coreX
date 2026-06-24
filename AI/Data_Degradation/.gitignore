@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.venv/
+Data_Degradation_env/
+*.csv
